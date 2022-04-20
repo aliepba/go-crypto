@@ -21,7 +21,7 @@ func authMiddleware(authService auth.Service, userService services.UserService) 
 		authHeader := c.GetHeader("Authorization")
 
 		if !strings.Contains(authHeader, "Bearer") {
-			response := helpers.APIResponse("Unthorized", http.StatusUnauthorized, "error", nil)
+			response := helpers.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
 			return
 		}
@@ -76,6 +76,7 @@ func main() {
 	metadataMethod := methods.NewMethodMetadata(db)
 	categoryMethod := methods.NewMethodCategory(db)
 	airdropMethod := methods.NewMethodAirdrop(db)
+	fiatMethod := methods.NewMethodFiat(db)
 
 	//service
 	userService := services.NewServiceUser(userMethod)
@@ -83,6 +84,7 @@ func main() {
 	metadataService := services.NewServiceMetadata(metadataMethod)
 	categoryService := services.NewServiceCategory(categoryMethod)
 	airdropService := services.NewServiceAirdrop(airdropMethod)
+	fiatService := services.NewServiceFiat(fiatMethod)
 	authService := auth.NewService()
 
 	//handler
@@ -91,6 +93,7 @@ func main() {
 	metadataHandler := handlers.NewMetadataHandler(metadataService)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 	airdropHandler := handlers.NewAirdropHandler(airdropService)
+	fiatHandler := handlers.NewFiatHandler(fiatService)
 
 	router := gin.Default()
 	api := router.Group("/epiay/v1")
@@ -106,12 +109,16 @@ func main() {
 	api.POST("/metadata", authMiddleware(authService, userService), metadataHandler.SaveMetadata)
 	api.GET("/cypto/info", authMiddleware(authService, userService), metadataHandler.GetMetadata)
 
+	api.POST("/category", authMiddleware(authService, userService), categoryHandler.SaveCategory)
 	api.GET("/categories", authMiddleware(authService, userService), categoryHandler.GetCategories)
+	api.GET("/category/:category", authMiddleware(authService, userService), categoryHandler.GetByCategory)
 
 	api.POST("/airdrop", authMiddleware(authService, userService), airdropHandler.SaveAirdrop)
 	api.GET("/airdrops", authMiddleware(authService, userService), airdropHandler.GetAirdrops)
 	api.GET("/airdrop/:id", authMiddleware(authService, userService), airdropHandler.GetAirdrop)
 	api.PUT("/airdrop/:id", authMiddleware(authService, userService), airdropHandler.UpdateAirdrop)
+
+	api.POST("/fiat", authMiddleware(authService, userService), fiatHandler.SaveFiat)
 
 	router.Run()
 }

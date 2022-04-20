@@ -44,5 +44,5 @@ func (m *method) DetailCoin(symbol string) (models.Coin, error) {
 		return coin, err
 	}
 
-	return coin, err
+	return coin, nil
 }
